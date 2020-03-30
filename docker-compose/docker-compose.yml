@@ -1,0 +1,45 @@
+version: "3"
+services:
+  mysql:
+    image: mysql:5.7
+    restart: always
+    container_name: hyperf_vuetify_admin_mysql
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: hyperf_vuetify_admin
+    ports:
+      - "33066:3306"
+    networks:
+      - hyperf-vuetify-admin
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-time-zone=+8:00
+    volumes:
+      - "./db:/docker-entrypoint-initdb.d"
+  hyperf:
+    build: ../backend
+    restart: always
+    container_name: hyperf_vuetify_admin_hyperf
+    networks:
+      - hyperf-vuetify-admin
+    volumes:
+      - "./conf/hyperf.env:/opt/www/.env"
+      - "./log/hyperf:/opt/www/runtime/logs"
+    depends_on:
+      - mysql
+  nginx:
+    image: nginx
+    restart: always
+    container_name: hyperf_vuetify_admin_nginx
+    environment:
+      TZ: Asia/Shanghai
+    networks:
+      - hyperf-vuetify-admin
+    ports:
+      - "8000:80"
+    volumes:
+      - "./conf/nginx.conf:/etc/nginx/conf.d/admin.conf:ro"
+      - "../frontend/dist:/usr/share/nginx/html/frontend:ro"
+    depends_on:
+      - hyperf
+networks:
+  hyperf-vuetify-admin:
